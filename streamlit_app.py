@@ -1,145 +1,60 @@
 import streamlit as st
 
-# Use HTML and CSS for custom styling
-st.markdown(
-    """
-    <style>
-    body {
-        font-family: Arial, sans-serif;
-    }
-    .container {
-        width: 600px;
-        margin: auto;
-        padding: 20px;
-        border: 2px solid #ccc;
-        border-radius: 10px;
-        background-color: #f9f9f9;
-    }
-    .title {
-        text-align: center;
-        font-size: 24px;
-        margin-bottom: 20px;
-    }
-    .section {
-        margin-bottom: 20px;
-    }
-    .section label {
-        display: block;
-        margin-bottom: 5px;
-    }
-    .section input, .section select {
-        width: 100%;
-        padding: 5px;
-        margin-bottom: 10px;
-        border: 1px solid #ccc;
-        border-radius: 5px;
-    }
-    .checkbox-section {
-        display: flex;
-        gap: 10px;
-    }
-    .button-group {
-        text-align: center;
-        margin-top: 20px;
-    }
-    .button-group button {
-        padding: 10px 20px;
-        margin: 5px;
-        border: none;
-        border-radius: 5px;
-        background-color: #007bff;
-        color: white;
-        cursor: pointer;
-    }
-    .button-group button:hover {
-        background-color: #0056b3;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+# Page configuration
+st.set_page_config(page_title="Linear Programming Solver", layout="wide")
 
-# HTML structure for the page
-st.markdown(
-    """
-    <div class="container">
-        <div class="title">Linear Programming Solver</div>
-        <div class="section">
-            <label for="num_variables">Количество переменных:</label>
-            <input type="number" id="num_variables" min="1" max="10" value="3">
-        </div>
-        <div class="section">
-            <label for="num_constraints">Количество ограничений:</label>
-            <input type="number" id="num_constraints" min="1" max="10" value="3">
-        </div>
-        <div class="section">
-            <label>Целевая функция:</label>
-            <div>
-                <input type="number" placeholder="0"> x₁ +
-                <input type="number" placeholder="0"> x₂ +
-                <input type="number" placeholder="0"> x₃ →
-                <select>
-                    <option>min</option>
-                    <option>max</option>
-                </select>
-            </div>
-        </div>
-        <div class="section">
-            <label>Ограничения:</label>
-            <div>
-                <input type="number" placeholder="0"> x₁ +
-                <input type="number" placeholder="0"> x₂ +
-                <input type="number" placeholder="0"> x₃ 
-                <select>
-                    <option>≤</option>
-                    <option>=</option>
-                    <option>≥</option>
-                </select>
-                <input type="number" placeholder="0">
-            </div>
-            <div>
-                <input type="number" placeholder="0"> x₁ +
-                <input type="number" placeholder="0"> x₂ +
-                <input type="number" placeholder="0"> x₃ 
-                <select>
-                    <option>≤</option>
-                    <option>=</option>
-                    <option>≥</option>
-                </select>
-                <input type="number" placeholder="0">
-            </div>
-            <div>
-                <input type="number" placeholder="0"> x₁ +
-                <input type="number" placeholder="0"> x₂ +
-                <input type="number" placeholder="0"> x₃ 
-                <select>
-                    <option>≤</option>
-                    <option>=</option>
-                    <option>≥</option>
-                </select>
-                <input type="number" placeholder="0">
-            </div>
-        </div>
-        <div class="section">
-            x₁, x₂, x₃ ≥ 0
-        </div>
-        <div class="checkbox-section">
-            <label><input type="checkbox"> В виде дробей</label>
-            <label><input type="checkbox"> С решением</label>
-        </div>
-        <div class="section">
-            <label for="method">Метод:</label>
-            <select id="method">
-                <option>Базовый симплекс-метод</option>
-                <option>В двойственную</option>
-            </select>
-        </div>
-        <div class="button-group">
-            <button>Очистить</button>
-            <button>Решить</button>
-            <button>В двойственную</button>
-        </div>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+# Title
+st.title("Linear Programming Solver")
+
+# Input for the number of variables and constraints
+num_variables = st.number_input("Количество переменных:", min_value=1, value=3, step=1, key="num_vars")
+num_constraints = st.number_input("Количество ограничений:", min_value=1, value=3, step=1, key="num_constraints")
+
+# Objective Function
+st.subheader("Целевая функция:")
+objective = []
+for i in range(num_variables):
+    coef = st.number_input(f"Коэффициент для x{i+1}", key=f"obj_coef_{i}")
+    objective.append(coef)
+objective_type = st.radio("Тип задачи:", ["min", "max"], horizontal=True, key="obj_type")
+
+# Constraints
+st.subheader("Ограничения:")
+constraints = []
+for i in range(num_constraints):
+    cols = st.columns([1, 1, 1, 1, 1])
+    constraint = []
+    for j in range(num_variables):
+        coef = cols[j].number_input(f"x{j+1} коэффициент (ограничение {i+1})", key=f"con_{i}_{j}")
+        constraint.append(coef)
+    inequality = cols[num_variables].selectbox("Знак:", ["≤", "≥", "="], key=f"ineq_{i}")
+    rhs = cols[num_variables + 1].number_input(f"Правая часть (ограничение {i+1})", key=f"rhs_{i}")
+    constraint.append(inequality)
+    constraint.append(rhs)
+    constraints.append(constraint)
+
+# Non-negativity
+st.write("x₁, x₂, ..., xₙ ≥ 0")
+
+# Additional options
+fraction_toggle = st.checkbox("В виде дробей", value=True, key="fraction_view")
+solution_toggle = st.checkbox("С решением", value=True, key="solution_view")
+
+# Method Selection
+method = st.selectbox("Метод:", ["Базовый симплекс-метод", "Другой метод"], key="method_select")
+
+# Buttons
+cols = st.columns([1, 1, 1])
+with cols[0]:
+    if st.button("Очистить"):
+        st.experimental_rerun()
+with cols[1]:
+    if st.button("Решить"):
+        st.write("Решение будет отображено здесь.")
+with cols[2]:
+    if st.button("В двойственную"):
+        st.write("Переключение на двойственную задачу.")
+
+# Footer or solution area
+st.divider()
+st.write("Создано с использованием Streamlit.")
