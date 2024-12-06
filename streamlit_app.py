@@ -1,58 +1,54 @@
 import streamlit as st
-import numpy as np
-from scipy.optimize import linprog
-import matplotlib.pyplot as plt
 
+# Title
 st.title("Linear Programming Solver")
-method = st.sidebar.selectbox("Choose Method", ["Graphical", "Simplex", "Dual"])
 
-st.subheader("Objective Function")
-objective_type = st.radio("Objective", ["Maximize", "Minimize"])
-coefficients = st.text_input("Enter coefficients of the objective function (comma-separated)", "2,3")
-coefficients = np.array([float(c) for c in coefficients.split(',')])
+# Inputs for the number of variables and constraints
+num_variables = st.number_input("Количество переменных:", min_value=1, value=3, step=1)
+num_constraints = st.number_input("Количество ограничений:", min_value=1, value=3, step=1)
 
-st.subheader("Constraints")
-num_constraints = st.number_input("Number of constraints", min_value=1, value=2, step=1)
+st.write("### Целевая функция:")
+# Inputs for the coefficients of the objective function
+objective_function = []
+for i in range(num_variables):
+    coef = st.number_input(f"Коэффициент для x{i+1}:", key=f"objective_{i}")
+    objective_function.append(coef)
+objective_type = st.selectbox("Тип:", ["min", "max"], key="objective_type")
+
+st.write("### Ограничения:")
+# Inputs for constraints
 constraints = []
 for i in range(num_constraints):
-    constraint = st.text_input(f"Constraint {i+1} (format: 'a1,a2,... <= b')", "1,2 <= 10")
-    constraints.append(constraint)
+    st.write(f"Ограничение {i+1}:")
+    constraint = []
+    for j in range(num_variables):
+        coef = st.number_input(f"Коэффициент для x{j+1} в ограничении {i+1}:", key=f"constraint_{i}_{j}")
+        constraint.append(coef)
+    rhs = st.number_input(f"Правая часть для ограничения {i+1}:", key=f"rhs_{i}")
+    sign = st.selectbox(f"Знак ограничения {i+1}:", ["<=", "=", ">="], key=f"sign_{i}")
+    constraints.append((constraint, rhs, sign))
 
-A, b = [], []
-for constraint in constraints:
-    parts = constraint.split("<=")
-    A.append([float(x) for x in parts[0].split(',')])
-    b.append(float(parts[1]))
-A = np.array(A)
-b = np.array(b)
+st.write("x₁, x₂, ..., xₙ ≥ 0")
 
-if st.button("Solve"):
-    if method == "Graphical":
-        # Implement graphical solution (for two variables)
-        if len(coefficients) != 2:
-            st.error("Graphical method only supports 2 variables.")
-        else:
-            st.write("Solution via Graphical Method:")
-            # Visualization
-            fig, ax = plt.subplots()
-            x = np.linspace(0, max(b), 400)
-            for i, row in enumerate(A):
-                ax.plot(x, (b[i] - row[0]*x)/row[1], label=f"Constraint {i+1}")
-            ax.fill_between(x, 0, b[0] / A[0, 1], color='gray', alpha=0.3)
-            ax.legend()
-            st.pyplot(fig)
+# Toggle options
+fraction_view = st.checkbox("В виде дробей")
+show_solution = st.checkbox("С решением")
 
-    elif method == "Simplex":
-        st.write("Solution via Simplex Method:")
-        res = linprog(c=-coefficients if objective_type == "Maximize" else coefficients, 
-                      A_ub=A, b_ub=b, method="highs")
-        st.write(f"Optimal value: {res.fun}, Variables: {res.x}")
+# Method selection dropdown
+method = st.selectbox("Метод:", ["Базовый симплекс-метод", "В двойственную"], key="method")
 
-    elif method == "Dual":
-        st.write("Solution via Dual Problem:")
-        # Transform to dual and solve
-        dual_A = -A.T
-        dual_b = -coefficients
-        dual_c = b
-        res_dual = linprog(c=dual_c, A_ub=dual_A, b_ub=dual_b, method="highs")
-        st.write(f"Dual optimal value: {res_dual.fun}, Variables: {res_dual.x}")
+# Action buttons
+col1, col2, col3 = st.columns(3)
+with col1:
+    if st.button("Очистить"):
+        st.experimental_rerun()
+with col2:
+    solve = st.button("Решить")
+with col3:
+    dual = st.button("В двойственную")
+
+# Handling the Solve button
+if solve:
+    st.write("**Результаты:**")
+    # Placeholder for solving the linear programming problem
+    st.write("Решение будет здесь.")
